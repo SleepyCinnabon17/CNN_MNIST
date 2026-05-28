@@ -42,3 +42,12 @@ dZ = (softmax(Z) - one_hot(y)) / N
 ```
 
 This avoids explicitly forming the softmax Jacobian during training.
+
+The standalone `Softmax` layer remains implemented for API completeness and
+inference-style probability flows. Its backward pass computes the per-sample
+Jacobian-vector product, but the default training architectures intentionally
+end with logits and rely on `SoftmaxCrossEntropyLoss` instead.
+
+The loss is computed from stable log-softmax algebra rather than
+`log(prob + eps)`, so the backward expression above is exactly consistent with
+the forward objective for finite logits.

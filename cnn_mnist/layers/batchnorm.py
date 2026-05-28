@@ -19,6 +19,7 @@ class BatchNorm(LayerBase):
         momentum: float = 0.9,
         eps: float = 1e-5,
     ) -> None:
+        # Accepted for API consistency with layers that require random initialization.
         del rng
         self.num_features = num_features
         self.momentum = momentum
@@ -82,7 +83,7 @@ class BatchNorm(LayerBase):
         dx_hat = dout_matrix * self.gamma
         dvar = np.sum(dx_hat * self._x_centered * -0.5 * self._inv_std**3, axis=0)
         dmean = np.sum(dx_hat * -self._inv_std, axis=0)
-        dmean += dvar * np.mean(-2.0 * self._x_centered, axis=0)
+        dmean += dvar * np.sum(-2.0 * self._x_centered, axis=0)
         dx = dx_hat * self._inv_std
         dx += dvar * 2.0 * self._x_centered / m
         dx += dmean / m

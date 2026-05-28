@@ -20,6 +20,8 @@ def predict(
     """Predict one raw ``28x28`` image and return ``(label, probabilities)``."""
     if image.shape != (28, 28):
         raise ValueError("predict expects a raw 28x28 image")
+    if model is None and weights_path is None:
+        raise ValueError("predict requires a model or weights_path")
     if model is None:
         model = build_lenet_model(TrainConfig())
     if weights_path is not None:

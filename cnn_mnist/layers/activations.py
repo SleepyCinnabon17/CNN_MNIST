@@ -28,7 +28,13 @@ class ReLU(LayerBase):
 
 
 class Softmax(LayerBase):
-    """Numerically stable softmax activation."""
+    """Numerically stable standalone softmax activation.
+
+    Training models in this project pass logits directly to
+    ``SoftmaxCrossEntropyLoss`` for the combined stable gradient; this layer is
+    provided for API completeness, inference-style probabilities, and explicit
+    Jacobian-vector product testing.
+    """
 
     def __init__(self) -> None:
         self._out: Optional[np.ndarray] = None

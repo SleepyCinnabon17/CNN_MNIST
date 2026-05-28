@@ -119,9 +119,9 @@ class Conv2D(LayerBase):
         dx_padded = self._col2im(dcols, (n, self.in_channels, h + top + bottom, w + left + right), out_h, out_w)
         if top == bottom == left == right == 0:
             return dx_padded
-        h_end = dx_padded.shape[2] - bottom if bottom else dx_padded.shape[2]
-        w_end = dx_padded.shape[3] - right if right else dx_padded.shape[3]
-        return dx_padded[:, :, top:h_end, left:w_end]
+        h_stop = -bottom if bottom else None
+        w_stop = -right if right else None
+        return dx_padded[:, :, top:h_stop, left:w_stop]
 
     def params(self) -> ArrayDict:
         """Return convolution parameters."""
