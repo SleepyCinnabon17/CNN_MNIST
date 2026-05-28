@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, cast
 
 import numpy as np
 
@@ -111,7 +111,7 @@ class Conv2D(LayerBase):
         w_flat = self.W.reshape(self.num_filters, -1)
         out = cols @ w_flat.T + self.b
         self._cols = cols
-        self._x_shape = x.shape
+        self._x_shape = cast(Tuple[int, int, int, int], x.shape)
         self._pad = (top, bottom, left, right)  # type: ignore[assignment]
         self._out_hw = (out_h, out_w)
         return out.reshape(n, out_h, out_w, self.num_filters).transpose(0, 3, 1, 2)
