@@ -1,0 +1,22 @@
+# Python/runtime caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local environments
+.venv/
+venv/
+env/
+
+# Reproducible local data and run logs
+data/
+*.log
+*.err
+
+# Editor/OS noise
+.DS_Store
+Thumbs.db
