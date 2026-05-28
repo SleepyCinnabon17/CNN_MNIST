@@ -2,6 +2,7 @@ import gzip
 import struct
 
 import numpy as np
+import pytest
 
 from cnn_mnist.data.augment import random_shift
 from cnn_mnist.data.dataloader import DataLoader
@@ -64,8 +65,8 @@ def test_random_shift_preserves_shape_and_only_moves_pixels():
 
 
 def test_confusion_matrix_and_classification_report():
-    y_true = np.array([0, 1, 1, 2])
-    y_pred = np.array([0, 1, 2, 2])
+    y_true = np.array([0, 1, 1, 2], dtype=np.float32)
+    y_pred = np.array([0, 1, 2, 2], dtype=np.float32)
 
     matrix = confusion_matrix(y_true, y_pred, num_classes=3)
     report = classification_report(y_true, y_pred, num_classes=3)
@@ -74,3 +75,11 @@ def test_confusion_matrix_and_classification_report():
     assert np.isclose(report["precision"][1], 1.0)
     assert np.isclose(report["recall"][1], 0.5)
     assert np.isclose(report["macro_f1"], (1.0 + 2 / 3 + 2 / 3) / 3)
+
+
+def test_confusion_matrix_rejects_labels_outside_configured_class_range():
+    with pytest.raises(ValueError, match="outside"):
+        confusion_matrix(np.array([0, 3]), np.array([0, 1]), num_classes=3)
+
+    with pytest.raises(ValueError, match="outside"):
+        confusion_matrix(np.array([0, 1]), np.array([0, -1]), num_classes=3)

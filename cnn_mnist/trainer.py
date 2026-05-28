@@ -32,6 +32,7 @@ class Trainer:
             "val_loss": [],
             "val_accuracy": [],
         }
+        self._epoch_index = 0
 
     def _build_optimizer(self) -> Union[SGDMomentum, Adam]:
         if self.config.optimizer == "sgd_momentum":
@@ -92,10 +93,11 @@ class Trainer:
             train_y,
             batch_size=self.config.batch_size,
             shuffle=True,
-            seed=self.config.seed + len(self.history["train_loss"]),
+            seed=self.config.seed + self._epoch_index,
             augment=self.config.augment and train_x.ndim == 4,
             max_shift=self.config.max_shift,
         )
+        self._epoch_index += 1
         total_loss = 0.0
         total_seen = 0
         correct = 0
@@ -131,7 +133,7 @@ class Trainer:
             total_seen += len(batch_x)
             preds.append(np.argmax(logits, axis=1))
         y_pred = np.concatenate(preds)
-        report = classification_report(y, y_pred, num_classes=int(max(np.max(y), np.max(y_pred))) + 1)
+        report = classification_report(y, y_pred, num_classes=self.config.num_classes)
         return {
             "loss": total_loss / total_seen,
             "accuracy": accuracy(y, y_pred),

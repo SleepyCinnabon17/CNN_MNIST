@@ -13,10 +13,18 @@ from cnn_mnist.trainer import Trainer
 from cnn_mnist.utils.checkpoint import load_model
 
 
+def _full_mnist_enabled(config):
+    return config.getoption("--run-full-mnist") or os.environ.get("RUN_FULL_MNIST") == "1"
+
+
+def _full_mnist_repro_enabled(config):
+    return config.getoption("--run-full-mnist-repro") or os.environ.get("RUN_FULL_MNIST_REPRO") == "1"
+
+
 @pytest.mark.slow
-def test_full_mnist_training_acceptance(tmp_path):
-    if os.environ.get("RUN_FULL_MNIST") != "1":
-        pytest.skip("Set RUN_FULL_MNIST=1 to run the full 20-epoch MNIST acceptance test.")
+def test_full_mnist_training_acceptance(request, tmp_path):
+    if not _full_mnist_enabled(request.config):
+        pytest.skip("Set RUN_FULL_MNIST=1 or pass --run-full-mnist for full MNIST acceptance.")
 
     config = TrainConfig(
         epochs=20,
@@ -47,9 +55,9 @@ def test_full_mnist_training_acceptance(tmp_path):
 
 
 @pytest.mark.slow
-def test_full_mnist_reproducibility_acceptance(tmp_path):
-    if os.environ.get("RUN_FULL_MNIST_REPRO") != "1":
-        pytest.skip("Set RUN_FULL_MNIST_REPRO=1 to run two full reproducibility runs.")
+def test_full_mnist_reproducibility_acceptance(request, tmp_path):
+    if not _full_mnist_repro_enabled(request.config):
+        pytest.skip("Set RUN_FULL_MNIST_REPRO=1 or pass --run-full-mnist-repro.")
 
     accuracies = []
     for run in range(2):
@@ -77,9 +85,9 @@ def test_full_mnist_reproducibility_acceptance(tmp_path):
 
 
 @pytest.mark.slow
-def test_single_image_inference_latency_acceptance():
-    if os.environ.get("RUN_FULL_MNIST") != "1":
-        pytest.skip("Set RUN_FULL_MNIST=1 after training artifacts exist to test latency.")
+def test_single_image_inference_latency_acceptance(request):
+    if not _full_mnist_enabled(request.config):
+        pytest.skip("Set RUN_FULL_MNIST=1 or pass --run-full-mnist after training artifacts exist.")
 
     image = np.zeros((28, 28), dtype=np.float32)
     weights = Path("./checkpoints/best_model.npz")

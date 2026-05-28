@@ -16,6 +16,13 @@ python -m pip install -r requirements.txt
 python -m pytest -m "not slow"
 ```
 
+Full MNIST acceptance checks are opt-in because they run 20-epoch training jobs:
+
+```bash
+python -m pytest tests/test_acceptance_slow.py -m slow --run-full-mnist
+python -m pytest tests/test_acceptance_slow.py::test_full_mnist_reproducibility_acceptance --run-full-mnist-repro
+```
+
 ## Train
 
 ```bash
@@ -53,4 +60,5 @@ python -m cnn_mnist.inference path/to/image.npy --weights ./checkpoints/best_mod
 ```
 
 The image file must contain one raw `28x28` NumPy array. Pixel values may be
-either `[0, 255]` or normalized `[0.0, 1.0]`.
+either `[0, 255]` or normalized `[0.0, 1.0]`. Programmatic calls to
+`predict()` require either a loaded model or a weights path.

@@ -31,7 +31,11 @@ class Model:
         return grad
 
     def params(self) -> dict[str, np.ndarray]:
-        """Return a flat dict of mutable parameter arrays."""
+        """Return flat live parameter arrays for in-place optimizer updates.
+
+        Reassigning keys in the returned dict does not replace layer parameters; mutate the
+        arrays themselves or use ``load_state_dict`` for model state changes.
+        """
         flat: dict[str, np.ndarray] = {}
         for index, layer in enumerate(self.layers):
             for name, value in layer.params().items():
@@ -51,7 +55,10 @@ class Model:
         return {key: value.copy() for key, value in self.params().items()}
 
     def load_state_dict(self, state: dict[str, np.ndarray]) -> None:
-        """Load parameters from a mapping keyed like ``state_dict``."""
+        """Load parameters from a mapping keyed like ``state_dict``.
+
+        Values are copied into existing layer arrays in place, preserving optimizer references.
+        """
         params = self.params()
         missing = set(params) - set(state)
         extra = set(state) - set(params)
@@ -92,7 +99,7 @@ def build_lenet_model(config: Optional[TrainConfig] = None) -> Model:
                 Dense(32 * 7 * 7, 128, rng=rng),
                 ReLU(),
                 Dropout(0.25, rng=rng),
-                Dense(128, 10, rng=rng),
+                Dense(128, config.num_classes, rng=rng),
             ]
         )
     if config.architecture != "srs_reference":
@@ -115,6 +122,6 @@ def build_lenet_model(config: Optional[TrainConfig] = None) -> Model:
             Dense(128 * 7 * 7, 1024, rng=rng),
             ReLU(),
             Dropout(config.dropout_fc, rng=rng),
-            Dense(1024, 10, rng=rng),
+            Dense(1024, config.num_classes, rng=rng),
         ]
     )

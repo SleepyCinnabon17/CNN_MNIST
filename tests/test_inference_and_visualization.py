@@ -1,6 +1,8 @@
 import numpy as np
+import pytest
 
 from cnn_mnist.inference import predict
+from cnn_mnist.utils import visualization as visualization_module
 from cnn_mnist.utils.visualization import (
     plot_confusion_matrix,
     plot_conv_filters,
@@ -24,6 +26,13 @@ def test_predict_normalizes_raw_image_and_returns_label_and_probabilities():
     assert np.allclose(probs.sum(), 1.0)
 
 
+def test_predict_requires_model_or_weights_path():
+    image = np.zeros((28, 28), dtype=np.float32)
+
+    with pytest.raises(ValueError, match="model or weights_path"):
+        predict(image)
+
+
 def test_visualization_artifacts_are_saved(tmp_path):
     history = {
         "train_loss": [2.0, 1.0],
@@ -44,3 +53,40 @@ def test_visualization_artifacts_are_saved(tmp_path):
     assert (tmp_path / "confusion_matrix.png").exists()
     assert (tmp_path / "sample_predictions.png").exists()
     assert (tmp_path / "conv1_filters.png").exists()
+
+
+def test_sample_prediction_grid_scales_to_requested_count(monkeypatch, tmp_path):
+    calls = []
+
+    class FakeAxis:
+        def imshow(self, *args, **kwargs):
+            pass
+
+        def set_title(self, *args, **kwargs):
+            pass
+
+        def axis(self, *args, **kwargs):
+            pass
+
+    class FakeFigure:
+        def tight_layout(self):
+            pass
+
+        def savefig(self, path, *args, **kwargs):
+            path.touch()
+
+    class FakePlot:
+        def subplots(self, rows, cols, figsize):
+            calls.append((rows, cols, figsize))
+            return FakeFigure(), np.array([[FakeAxis() for _ in range(cols)] for _ in range(rows)])
+
+        def close(self, *args, **kwargs):
+            pass
+
+    monkeypatch.setattr(visualization_module, "_plt", lambda: FakePlot())
+    images = np.zeros((5, 1, 28, 28), dtype=np.float32)
+
+    visualization_module.plot_sample_predictions(images, np.arange(5), np.arange(5), tmp_path, count=5)
+
+    assert calls == [(2, 4, (7, 3.5))]
+    assert (tmp_path / "sample_predictions.png").exists()

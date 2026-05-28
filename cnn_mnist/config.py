@@ -10,6 +10,7 @@ class TrainConfig:
     data_dir: str = "./data/MNIST/raw"
     val_size: int = 10_000
     seed: int = 42
+    num_classes: int = 10
     normalize: bool = False
     architecture: str = "compact_lenet"
     optimizer: str = "sgd_momentum"
