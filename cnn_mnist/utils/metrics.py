@@ -14,10 +14,23 @@ def accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 
 def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, num_classes: int = 10) -> np.ndarray:
     """Return a ``num_classes x num_classes`` confusion matrix."""
-    matrix = np.zeros((num_classes, num_classes), dtype=np.int64)
-    for true, pred in zip(y_true.astype(int), y_pred.astype(int)):
-        matrix[true, pred] += 1
-    return matrix
+    true: np.ndarray = y_true.astype(np.int64, copy=False)
+    pred: np.ndarray = y_pred.astype(np.int64, copy=False)
+    if true.shape != pred.shape:
+        raise ValueError("y_true and y_pred must have the same shape")
+    if num_classes <= 0:
+        raise ValueError("num_classes must be positive")
+    out_of_range = (
+        np.any(true < 0)
+        or np.any(pred < 0)
+        or np.any(true >= num_classes)
+        or np.any(pred >= num_classes)
+    )
+    if out_of_range:
+        raise ValueError("labels are outside the configured class range")
+    flat = true * num_classes + pred
+    counts = np.bincount(flat, minlength=num_classes * num_classes)
+    return counts.reshape(num_classes, num_classes)
 
 
 def classification_report(

@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
+import sys
 from typing import Union
 
 import numpy as np
 
 
+@lru_cache(maxsize=1)
 def _plt():
     import matplotlib
 
-    matplotlib.use("Agg")
+    if "matplotlib.pyplot" not in sys.modules:
+        matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
     return plt
@@ -72,13 +76,16 @@ def plot_sample_predictions(
     plt = _plt()
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
-    count = min(count, len(images))
-    fig, axes = plt.subplots(4, 4, figsize=(7, 7))
-    for ax, index in zip(axes.ravel(), range(count)):
+    count = min(max(int(count), 0), len(images))
+    cols = min(4, max(1, count))
+    rows = max(1, int(np.ceil(count / cols)))
+    fig, axes = plt.subplots(rows, cols, figsize=(7, 1.75 * rows))
+    axes_arr = np.atleast_1d(axes).ravel()
+    for ax, index in zip(axes_arr, range(count)):
         ax.imshow(images[index, 0], cmap="gray")
         ax.set_title(f"t={int(y_true[index])} p={int(y_pred[index])}", fontsize=9)
         ax.axis("off")
-    for ax in axes.ravel()[count:]:
+    for ax in axes_arr[count:]:
         ax.axis("off")
     fig.tight_layout()
     fig.savefig(out / "sample_predictions.png", dpi=150)

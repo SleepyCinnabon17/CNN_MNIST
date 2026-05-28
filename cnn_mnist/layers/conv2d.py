@@ -64,13 +64,24 @@ class Conv2D(LayerBase):
     def _im2col(self, x: np.ndarray, out_h: int, out_w: int) -> np.ndarray:
         n, c, _, _ = x.shape
         kh, kw = self.kernel_size
-        cols = np.empty((n, out_h, out_w, c, kh, kw), dtype=x.dtype)
-        for i in range(out_h):
-            hs = i * self.stride
-            for j in range(out_w):
-                ws = j * self.stride
-                cols[:, i, j] = x[:, :, hs : hs + kh, ws : ws + kw]
-        return cols.reshape(n * out_h * out_w, c * kh * kw)
+        windows = np.lib.stride_tricks.sliding_window_view(  # type: ignore[call-overload]
+            x,
+            (kh, kw),
+            axis=(2, 3),
+        )
+        windows = windows[
+            :,
+            :,
+            : out_h * self.stride : self.stride,
+            : out_w * self.stride : self.stride,
+            :,
+            :,
+        ]
+        # BLAS consumes a contiguous matrix; mark the cache read-only to avoid alias surprises.
+        cols = np.ascontiguousarray(windows.transpose(0, 2, 3, 1, 4, 5))
+        cols = cols.reshape(n * out_h * out_w, c * kh * kw)
+        cols.flags.writeable = False
+        return cols
 
     def _col2im(
         self,
