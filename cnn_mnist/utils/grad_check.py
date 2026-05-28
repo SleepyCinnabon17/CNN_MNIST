@@ -26,7 +26,7 @@ def check_layer_gradient(
     for name, param in layer.params().items():
         analytic = layer.grads()[name].copy()
         numeric = np.zeros_like(param)
-        iterator = np.nditer(param, flags=["multi_index"], op_flags=["readwrite"])  # type: ignore[arg-type]
+        iterator = np.nditer(param, flags=["multi_index"], op_flags=[["readwrite"]])  # type: ignore[arg-type]
         while not iterator.finished:
             index = iterator.multi_index
             original = param[index]

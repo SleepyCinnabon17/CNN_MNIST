@@ -40,7 +40,7 @@ class Conv2D(LayerBase):
         self.db = np.zeros_like(self.b)
         self._cols: Optional[np.ndarray] = None
         self._x_shape: Optional[Tuple[int, int, int, int]] = None
-        self._pad: Optional[Tuple[int, int, int, int]] = None
+        self._pad: Optional[Tuple[int, int, int, int, int, int]] = None
         self._out_hw: Optional[Tuple[int, int]] = None
 
     def _padding(self, h: int, w: int) -> tuple[int, int, int, int, int, int]:
@@ -112,7 +112,7 @@ class Conv2D(LayerBase):
         out = cols @ w_flat.T + self.b
         self._cols = cols
         self._x_shape = x.shape
-        self._pad = (top, bottom, left, right)
+        self._pad = (top, bottom, left, right, out_h, out_w)
         self._out_hw = (out_h, out_w)
         return out.reshape(n, out_h, out_w, self.num_filters).transpose(0, 3, 1, 2)
 
@@ -121,7 +121,7 @@ class Conv2D(LayerBase):
         if self._cols is None or self._x_shape is None or self._pad is None or self._out_hw is None:
             raise RuntimeError("Conv2D.backward called before forward")
         n, _, h, w = self._x_shape
-        top, bottom, left, right = self._pad
+        top, bottom, left, right, _, _ = self._pad
         out_h, out_w = self._out_hw
         dout_flat = dout.transpose(0, 2, 3, 1).reshape(-1, self.num_filters)
         self.dW = (dout_flat.T @ self._cols).reshape(self.W.shape)

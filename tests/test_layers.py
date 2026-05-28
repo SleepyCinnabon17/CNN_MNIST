@@ -289,5 +289,5 @@ def test_conv2d_asymmetric_same_padding_input_gradient_matches_finite_difference
 
     error = _check_input_gradient(conv, x, dout)
 
-    assert conv._pad == (0, 1, 0, 1)
+    assert conv._pad[:4] == (0, 1, 0, 1)
     assert error < 1e-6
