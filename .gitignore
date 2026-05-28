@@ -13,7 +13,7 @@ venv/
 env/
 
 # Reproducible local data and run logs
-data/
+/data/
 *.log
 *.err
 
