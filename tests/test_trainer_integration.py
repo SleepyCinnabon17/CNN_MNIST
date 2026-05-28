@@ -2,7 +2,7 @@ import numpy as np
 
 from cnn_mnist.config import TrainConfig
 from cnn_mnist.layers import Dense, ReLU
-from cnn_mnist.model import Model
+from cnn_mnist.model import Model, build_lenet_model
 from cnn_mnist import trainer as trainer_module
 from cnn_mnist.trainer import Trainer
 
@@ -32,6 +32,29 @@ def test_trainer_fit_on_small_synthetic_problem_reduces_loss(tmp_path):
     assert metrics["accuracy"] > 0.9
     assert (tmp_path / "checkpoints" / "best_model.npz").exists()
     assert (tmp_path / "outputs" / "training_history.json").exists()
+
+
+def test_srs_reference_trainer_smoke_runs_one_synthetic_batch(tmp_path):
+    rng = np.random.default_rng(14)
+    x = rng.normal(size=(2, 1, 28, 28)).astype(np.float64)
+    y = np.array([0, 1])
+    config = TrainConfig(
+        architecture="srs_reference",
+        epochs=1,
+        batch_size=2,
+        lr=0.001,
+        augment=False,
+        output_dir=str(tmp_path / "outputs"),
+        checkpoint_dir=str(tmp_path / "checkpoints"),
+        use_tqdm=False,
+    )
+    trainer = Trainer(build_lenet_model(config), config)
+
+    history = trainer.fit(x, y, x, y)
+
+    assert len(history["train_loss"]) == 1
+    assert np.isfinite(history["train_loss"][0])
+    assert (tmp_path / "checkpoints" / "best_model.npz").exists()
 
 
 def test_trainer_evaluate_uses_configured_num_classes_for_metrics():

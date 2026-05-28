@@ -6,7 +6,16 @@ import pytest
 
 from cnn_mnist.data.augment import random_shift
 from cnn_mnist.data.dataloader import DataLoader
-from cnn_mnist.data.loader import one_hot, parse_idx_images, parse_idx_labels, train_val_split
+from cnn_mnist.data import loader as loader_module
+from cnn_mnist.data.loader import (
+    MNIST_FILES,
+    MNIST_MIRRORS,
+    download_mnist,
+    one_hot,
+    parse_idx_images,
+    parse_idx_labels,
+    train_val_split,
+)
 from cnn_mnist.utils.metrics import classification_report, confusion_matrix
 
 
@@ -40,6 +49,30 @@ def test_one_hot_and_train_val_split_are_deterministic():
         assert np.array_equal(a, b)
     assert first[0].shape[0] == 7
     assert first[2].shape[0] == 3
+
+
+def test_download_mnist_skips_existing_files_and_downloads_missing(tmp_path, monkeypatch):
+    existing_keys = {"train_images", "test_labels"}
+    calls = []
+    for key in existing_keys:
+        (tmp_path / MNIST_FILES[key]).write_bytes(b"existing")
+
+    def fake_urlretrieve(url, filename):
+        calls.append((url, filename))
+        filename.write_bytes(b"downloaded")
+        return str(filename), None
+
+    monkeypatch.setattr(loader_module.urllib.request, "urlretrieve", fake_urlretrieve)
+
+    paths = download_mnist(tmp_path)
+
+    assert set(paths) == set(MNIST_FILES)
+    assert all(path.exists() for path in paths.values())
+    assert {path.name for _, path in calls} == {
+        MNIST_FILES[key] for key in MNIST_FILES if key not in existing_keys
+    }
+    assert all(url.startswith(MNIST_MIRRORS[0]) for url, _ in calls)
+    assert all((tmp_path / MNIST_FILES[key]).read_bytes() == b"existing" for key in existing_keys)
 
 
 def test_dataloader_batches_shuffle_and_optional_train_augmentation():
